@@ -4,13 +4,10 @@ import sys
 import requests
 import secret_data # file that contains OAuth credentials
 import nltk # uncomment line after you install nltk
-#datamuse-caching
-import requests
-import json
 
 ## SI 206 - HW
 ## COMMENT WITH:
-## Your section day/time:
+## Your section day/time:sec-002
 ## Any names of people you worked with on this assignment:
 
 #usage should be python3 hw5_twitter.py <username> <num_tweets>
@@ -30,7 +27,7 @@ auth = OAuth1(consumer_key, consumer_secret, access_token, access_secret)
 
 #Write your code below:
 
-#Code for Part 3:Caching
+#Code for Part 3:Caching----------------------------------------------------------------
 #Finish parts 1 and 2 and then come back to this
 #using code from class
 # on startup, try to load the cache from file
@@ -72,27 +69,29 @@ def make_request_using_cache(baseurl, params, auth):
     # Make the request and cache the new data
     resp = requests.get(baseurl, params, auth=auth)
     CACHE_DICTION[unique_ident] = json.loads(resp.text)
-    dumped_json_cache = json.dumps(CACHE_DICTION)
+    dumped_json_cache = json.dumps(CACHE_DICTION, indent=4)
     fw = open(CACHE_FNAME,"w")
     fw.write(dumped_json_cache)
     fw.close() # Close the open file
     return CACHE_DICTION[unique_ident]
 
 # # Gets data from the twitter API, using the cache
-# def get_tweet_from_datamuse_caching(username):
+# def get_tweet_from_caching(username):
 #     baseurl = 'https://api.twitter.com/1.1/statuses/user_timeline.json'
 #     params_diction = {}
 #     params_diction["screen_name"] = username
 #     params_diction["count"] = num_tweets
 #     return make_request_using_cache(baseurl, params_diction)
 
-# extract just the 'text' from the data structures returned by twitter api
-
+#extract just the 'text' from the data structures returned by twitter api
 def get_text_list(tweet_dict_list):
-    tweet = []
-    for adict in tweet_dict_list:
-        tweet.append(adict['text'])
-    return tweet
+    atweet = []
+    try: 
+        for adict in tweet_dict_list:
+            atweet.append(adict['text'])
+    except:
+        print('Oops! The username is not valid: ' + tweet_dict_list['error'] + ' Please try a different one. :)')
+    return atweet
 
 def get_tweet(username, count, auth):
     base_url = 'https://api.twitter.com/1.1/statuses/user_timeline.json'
@@ -112,45 +111,69 @@ def filted_freqDist(tokenizedList):
         for token in tokened_sen:
             if token not in stop_words and token.isalpha():
                 freq_dist[token] += 1
-    # print(freq_dist.most_common(5))
     return freq_dist
 
-def main():
-    tweet_whole_dictList = get_tweet(username, num_tweets, auth)
-    tweet_text_list = get_text_list(tweet_whole_dictList)
-    tokenized_list = tweet_token(tweet_text_list)
-    print(filted_freqDist(tokenized_list).most_common(5))
+#Code for Part3 Ends----------------------------------------------------------------------------
 
-main()
+# #Code for Part 1:Get Tweets--------------------------------------------------------------------
+# base_url_part1 = 'https://api.twitter.com/1.1/statuses/user_timeline.json'
+# response_part1 = requests.get(base_url_part1, {'screen_name': username, 'count': num_tweets}, auth = auth).json()
+# #create tweet.json file
+# with open('tweet.json', 'w') as outfile:
+#   json.dump(response_part1, outfile, ensure_ascii=False, indent=4)
+# #Code for Part 1 Ends--------------------------------------------------------------------------
 
-
-# #Code for Part 1:Get Tweets
-# # base_url = 'https://api.twitter.com/1.1/statuses/user_timeline.json'
-# # response = requests.get(base_url, {'screen_name': username, 'count': num_tweets}, auth = auth).json()
-# # with open('tweet.json', 'w') as outfile:
-# #   json.dump(response, outfile, ensure_ascii=False, indent=4)
-# # create tweet.json file
+#Code for Part 2:Analyze Tweets-----------------------------------------------------------------
+##using tweet.json file--------------------------------
 # with open('tweet.json') as json_data:
 #     tweet_data = json.load(json_data)
 #     json_data.close()
 #     # print(tweet_data)
+
 # tweet_text = []
 # for adict in tweet_data:
 #     tweet_text.append(adict["text"])
-
-# #Code for Part 2:Analyze Tweets
-# tweet_token = []
+# atweet_token = []
 # for sentence in tweet_text:
-#     tweet_token.append(nltk.tokenize.word_tokenize(sentence))
+#     atweet_token.append(nltk.tokenize.word_tokenize(sentence))
 
 # stop_words = nltk.corpus.stopwords.words("english") + ["http", "https", "RT" ]
 # freq_dist = nltk.FreqDist()
-# for tokened_sen in tweet_token:
+# for tokened_sen in atweet_token:
 #     for token in tokened_sen:
 #         if token not in stop_words and token.isalpha():
 #             freq_dist[token] += 1
 # print(freq_dist.most_common(5))
+##end for using tweet.json file------------------------
 
+#get data from twitter API----------------------------
+base_url_part2 = 'https://api.twitter.com/1.1/statuses/user_timeline.json'
+response_part2 = requests.get(base_url_part2, {'screen_name': username, 'count': num_tweets}, auth = auth).text
+tweetDictList_part2 = json.loads(response_part2)
+
+tweetText_part2 = []
+for adict in tweetDictList_part2:
+    tweetText_part2.append(adict["text"])
+
+tweet_token_part2 = []
+for sentence in tweetText_part2:
+    tweet_token_part2.append(nltk.tokenize.word_tokenize(sentence))
+
+stop_words_part2 = nltk.corpus.stopwords.words("english") + ["http", "https", "RT" ]
+freq_dist = nltk.FreqDist()
+for tokened_sen in tweet_token_part2:
+    for token in tokened_sen:
+        if token not in stop_words_part2 and token.isalpha():
+            freq_dist[token] += 1
+
+
+print('----------**Result for Part 2**----------')
+print(freq_dist.most_common(5))
+print('-----------------------------------------')
+#get data from twitter API Ends--------------------------
+
+
+##Code for Part 2 Ends.-------------------------------------------------------------------------
 
 if __name__ == "__main__":
     if not consumer_key or not consumer_secret:
@@ -159,3 +182,12 @@ if __name__ == "__main__":
     if not access_token or not access_secret:
         print("You need to fill in this API's specific OAuth URLs in this file.")
         exit()
+
+    print('\n')
+    print('----------**Result for Part 3**----------')
+    tweet_whole_dictList = get_tweet(username, num_tweets, auth)
+    tweet_text_list = get_text_list(tweet_whole_dictList)
+    if tweet_text_list != []:
+        tokenized_list = tweet_token(tweet_text_list)
+        print(filted_freqDist(tokenized_list).most_common(5))
+    print('-----------------------------------------')
