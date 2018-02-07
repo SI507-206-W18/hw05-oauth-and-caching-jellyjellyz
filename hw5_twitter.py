@@ -86,11 +86,8 @@ def make_request_using_cache(baseurl, params, auth):
 #extract just the 'text' from the data structures returned by twitter api
 def get_text_list(tweet_dict_list):
     atweet = []
-    try: 
-        for adict in tweet_dict_list:
-            atweet.append(adict['text'])
-    except:
-        print('Oops! The username is not valid: ' + tweet_dict_list['error'] + ' Please try a different one. :)')
+    for adict in tweet_dict_list:
+        atweet.append(adict['text'])
     return atweet
 
 def get_tweet(username, count, auth):
@@ -147,29 +144,33 @@ def filted_freqDist(tokenizedList):
 ##end for using tweet.json file------------------------
 
 #get data from twitter API----------------------------
-base_url_part2 = 'https://api.twitter.com/1.1/statuses/user_timeline.json'
-response_part2 = requests.get(base_url_part2, {'screen_name': username, 'count': num_tweets}, auth = auth).text
-tweetDictList_part2 = json.loads(response_part2)
+def part2():
+    base_url_part2 = 'https://api.twitter.com/1.1/statuses/user_timeline.json'
+    response_part2 = requests.get(base_url_part2, {'screen_name': username, 'count': num_tweets}, auth = auth).text
+    tweetDictList_part2 = json.loads(response_part2)
 
-tweetText_part2 = []
-for adict in tweetDictList_part2:
-    tweetText_part2.append(adict["text"])
+    tweetText_part2 = []
+    try:
+        for adict in tweetDictList_part2:
+            tweetText_part2.append(adict["text"])
+    except:
+        print('Oops! The username is not valid, Please try a different one. :)')
+        quit()
+    tweet_token_part2 = []
+    for sentence in tweetText_part2:
+        tweet_token_part2.append(nltk.tokenize.word_tokenize(sentence))
 
-tweet_token_part2 = []
-for sentence in tweetText_part2:
-    tweet_token_part2.append(nltk.tokenize.word_tokenize(sentence))
-
-stop_words_part2 = nltk.corpus.stopwords.words("english") + ["http", "https", "RT" ]
-freq_dist = nltk.FreqDist()
-for tokened_sen in tweet_token_part2:
-    for token in tokened_sen:
-        if token not in stop_words_part2 and token.isalpha():
-            freq_dist[token] += 1
+    stop_words_part2 = nltk.corpus.stopwords.words("english") + ["http", "https", "RT" ]
+    freq_dist = nltk.FreqDist()
+    for tokened_sen in tweet_token_part2:
+        for token in tokened_sen:
+            if token not in stop_words_part2 and token.isalpha():
+                freq_dist[token] += 1
 
 
-print('----------**Result for Part 2**----------')
-print(freq_dist.most_common(5))
-print('-----------------------------------------')
+    print('----------**Result for Part 2**----------')
+    print(freq_dist.most_common(5))
+    print('-----------------------------------------')
 #get data from twitter API Ends--------------------------
 
 
@@ -183,10 +184,13 @@ if __name__ == "__main__":
         print("You need to fill in this API's specific OAuth URLs in this file.")
         exit()
 
-    print('\n')
     print('----------**Result for Part 3**----------')
     tweet_whole_dictList = get_tweet(username, num_tweets, auth)
-    tweet_text_list = get_text_list(tweet_whole_dictList)
+    try:
+        tweet_text_list = get_text_list(tweet_whole_dictList)
+    except:
+        print('Oops! Invalid username! Please try a different one. :)')
+        quit()
     if tweet_text_list != []:
         tokenized_list = tweet_token(tweet_text_list)
         print(filted_freqDist(tokenized_list).most_common(5))
